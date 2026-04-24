@@ -28,9 +28,8 @@
           id="profile-email"
           type="email"
           class="form-input"
-          value={{or this.formEmail this.model.email}}
-          {{on "input" (fn this.setField "formEmail")}}
-          required
+          value={{this.model.email}}
+          readonly
         />
       </div>
 

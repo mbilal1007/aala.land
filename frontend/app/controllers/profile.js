@@ -7,16 +7,12 @@ export default class ProfileController extends Controller {
   @service auth;
   @service notifications;
   @service router;
+  @service session;
 
   @tracked formName = '';
-  @tracked formEmail = '';
   @tracked formPassword = '';
   @tracked isSaving = false;
   @tracked errorMsg = '';
-
-  get user() {
-    return this.model;
-  }
 
   @action setField(fieldName, e) { this[fieldName] = e.target.value; }
 
@@ -30,17 +26,24 @@ export default class ProfileController extends Controller {
 
     try {
       const body = {
-        name: this.formName || this.user.name,
+        name: this.formName || this.model?.name,
       };
 
       if (this.formPassword) {
         body.password = this.formPassword;
       }
 
-      await this.auth.fetchJson(`/users/${userId}`, {
+      const result = await this.auth.fetchJson(`/users/${userId}`, {
         method: 'PATCH',
         body: JSON.stringify(body),
       });
+
+      const updatedUser = result?.data ?? this.model;
+
+      this.session.data.authenticated.user = updatedUser;
+      this.session.saveToStorage();
+      this.formName = updatedUser.name ?? '';
+      this.formPassword = '';
 
       this.notifications.success('Profile updated');
       this.router.refresh('profile');
